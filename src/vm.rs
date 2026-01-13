@@ -1,10 +1,5 @@
-use std::env;
-use std::ffi::OsStr;
-use std::fs::{File, OpenOptions};
-use std::io::{self, BufRead, BufReader, Write};
-use std::path::Path;
-
-use crate::utils;
+use std::fs::File;
+use std::io::Write;
 
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -79,7 +74,7 @@ impl VM {
     }
 
     fn pop(&mut self) -> Option<i32> {
-        if self.sp() > 0 {
+        if self.sp() >= 0 {
             let value = self.stack[self.sp() as usize];
             *self.sp_mut() -= 1;
             Some(value)

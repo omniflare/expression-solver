@@ -1,11 +1,13 @@
-use crate::{lexer::Lexer, parser::Parser};
+use std::fs::OpenOptions;
+
+use crate::{compiler::compile, lexer::Lexer, parser::Parser, vm::run_program};
 
 mod compiler;
 mod input;
 mod lexer;
 mod parser;
-mod vm;
 mod utils;
+mod vm;
 
 fn main() {
     let blob = input::import_from_path("new.txt").unwrap();
@@ -30,4 +32,22 @@ fn main() {
     };
 
     println!("{:#?}", ast);
+
+    let program = compile(&ast);
+
+    println!("\nBYTECODE:");
+    println!("{:?}", program);
+
+    let mut log_file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open("log.log")
+        .expect("Failed to open log file");
+
+    match run_program(program, &mut log_file) {
+        Ok(Some(result)) => println!("\nRESULT = {}", result),
+        Ok(None) => println!("Program finished with empty stack"),
+        Err(_) => println!("Runtime error"),
+    }
 }
