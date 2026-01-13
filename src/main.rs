@@ -1,8 +1,11 @@
 use crate::{lexer::Lexer, parser::Parser};
 
+mod compiler;
 mod input;
 mod lexer;
 mod parser;
+mod vm;
+mod utils;
 
 fn main() {
     let blob = input::import_from_path("new.txt").unwrap();
