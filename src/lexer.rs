@@ -9,6 +9,8 @@ pub enum Token {
     Slash,
     LPara,
     RPara,
+    Define, 
+    Ident(String), 
 }
 
 pub struct Lexer {
@@ -55,6 +57,19 @@ impl Lexer {
         num
     }
 
+    fn read_identifier(&mut self) -> String {
+        let mut ident = String::new();
+        while let Some(c) = self.peek() {
+            if c.is_alphabetic() || c == '_' { // var can be "define my_age"
+                ident.push(c);
+                self.advance();
+            }else {
+                break;
+            }
+        }
+        ident
+    }
+
     pub fn tokenize(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
 
@@ -67,7 +82,14 @@ impl Lexer {
                     let num = self.read_number();
                     tokens.push(Token::Number(num));
                 }
-
+                'a'..='z' | 'A'..='Z' | '_' => {
+                    let ident = self.read_identifier();
+                    let token = match ident.as_str() {
+                        "define" => Token::Define, 
+                        _ => Token::Ident(ident),
+                    };
+                    tokens.push(token);
+                }
                 '+' => {
                     self.advance();
                     tokens.push(Token::Plus);

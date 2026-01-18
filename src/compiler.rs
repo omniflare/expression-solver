@@ -33,6 +33,7 @@ pub fn compile_expression(expr: &Expr, out: &mut Vec<i32>) {
                 }
             }
         }
+        &Expr::Variable(_) | &Expr::Let { .. } => todo!()
     }
 }
 

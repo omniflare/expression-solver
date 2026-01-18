@@ -16,6 +16,12 @@ pub enum BinaryOp {
 #[derive(Debug)]
 pub enum Expr {
     Number(i32),
+    Variable(String),
+    Let {
+        name: String,
+        value: Box<Expr>,
+        body: Box<Expr>,
+    },
     Unary {
         op: UnaryOp,
         expr: Box<Expr>,
@@ -47,7 +53,7 @@ impl Parser {
         tok
     }
 
-    // TODO : need to change this error from string type to thiserror
+    //to make sure we return exactly one token from the entire collection;
     pub fn parse(&mut self) -> Result<Expr, String> {
         let expr = self.parse_expr()?;
 
@@ -58,9 +64,10 @@ impl Parser {
         Ok(expr)
     }
 
-    // using a stack descent parser for now, will check my options later ;
-
     pub fn parse_expr(&mut self) -> Result<Expr, String> {
+        if let Some(Token::Define) = self.peek() {
+            return self.parse_let();
+        }
         let mut expr = self.parse_term()?;
         while let Some(tok) = self.peek() {
             match tok {
@@ -81,6 +88,34 @@ impl Parser {
             }
         }
         Ok(expr)
+    }
+
+    pub fn parse_let(&mut self) -> Result<Expr, String> {
+        // this consumes 'define'
+        self.advance();
+
+        match self.advance() {
+            Some(Token::LPara) => {}
+            _ => return Err("Expected '(' after 'define' ".into()),
+        }
+        let name = match self.advance() {
+            Some(Token::Ident(n)) => n.clone(),
+            _ => return Err("Expected variable name after 'define (' ".into()),
+        };
+
+        let value = self.parse_expr()?;
+        let body = self.parse_expr()?;
+
+        match self.advance() {
+            Some(Token::RPara) => {}
+            _ => return Err("Expected ')' to close define expression".into()),
+        }
+
+        Ok(Expr::Let {
+            name,
+            value: Box::new(value),
+            body: Box::new(body),
+        })
     }
 
     fn parse_term(&mut self) -> Result<Expr, String> {
@@ -123,6 +158,7 @@ impl Parser {
     fn parse_primary(&mut self) -> Result<Expr, String> {
         match self.advance() {
             Some(Token::Number(n)) => Ok(Expr::Number(*n)),
+            Some(Token::Ident(name)) => Ok(Expr::Variable(name.clone())),
             Some(Token::LPara) => {
                 let expr = self.parse_expr()?;
                 match self.advance() {
