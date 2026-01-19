@@ -17,7 +17,7 @@ pub enum BinaryOp {
 pub enum Expr {
     Number(i32),
     Variable(String),
-    Let {
+    Define {
         name: String,
         value: Box<Expr>,
         body: Box<Expr>,
@@ -111,7 +111,7 @@ impl Parser {
             _ => return Err("Expected ')' to close define expression".into()),
         }
 
-        Ok(Expr::Let {
+        Ok(Expr::Define {
             name,
             value: Box::new(value),
             body: Box::new(body),

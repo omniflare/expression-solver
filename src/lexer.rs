@@ -60,7 +60,7 @@ impl Lexer {
     fn read_identifier(&mut self) -> String {
         let mut ident = String::new();
         while let Some(c) = self.peek() {
-            if c.is_alphabetic() || c == '_' { // var can be "define my_age"
+            if c.is_alphanumeric() || c == '_' { // var can be "define my_age" or "var1"
                 ident.push(c);
                 self.advance();
             }else {

@@ -1,1 +1,1 @@
-(let (x 5 let (y 10 x+y)))
+define (x 5 define (y 10 x+y))

@@ -10,6 +10,7 @@ pub fn string_to_instruction(token: &str) -> Instruction {
         "DIV" => Instruction::DIV,
         "SET" => Instruction::SET,
         "HLT" => Instruction::HLT,
+        "GET" => Instruction::GET,
         _ => Instruction::UNK,
     }
 }

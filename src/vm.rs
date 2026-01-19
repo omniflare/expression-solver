@@ -12,14 +12,15 @@ pub enum Instruction {
     DIV = 5,
     SET = 6,
     HLT = 7,
+    GET = 8,
     UNK = 9,
 }
 
 const STACK_SIZE: usize = 256;
-const NUM_OF_REGISTERS: usize = 8;
+const NUM_OF_REGISTERS: usize = 16;
 // main registers we can add more later;
-const IP: usize = 6;
-const SP: usize = 7;
+const IP: usize = 14;
+const SP: usize = 15;
 
 pub struct VM {
     running: bool,
@@ -206,9 +207,18 @@ impl VM {
                 }
             }
             x if x == Instruction::SET as i32 => {
-                println!("SET not implemented yet");
-                self.error = true;
-                self.running = false;
+                *self.ip_mut() += 1;
+                let reg_id = program[self.ip() as usize] as usize;
+                if let Some(val) = self.pop() {
+                    self.registers[reg_id] = val;
+                }
+            }
+            x if x == Instruction::GET as i32 => {
+                *self.ip_mut() += 1;
+                let reg_id = program[self.ip() as usize] as usize;
+
+                let value = self.registers[reg_id];
+                self.push(value);
             }
             _ => {
                 println!("Unknown instruction: {}", instr);
