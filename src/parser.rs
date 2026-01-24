@@ -11,6 +11,12 @@ pub enum BinaryOp {
     Sub,
     Mul,
     Div,
+    Equal,
+    NotEqual,
+    Less,
+    Greater,
+    LessEq,
+    GreaterEq,
 }
 
 #[derive(Debug)]
@@ -30,6 +36,11 @@ pub enum Expr {
         left: Box<Expr>,
         op: BinaryOp,
         right: Box<Expr>,
+    },
+    If {
+        condition: Box<Expr>,
+        then_branch: Box<Expr>,
+        else_branch: Box<Expr>,
     },
 }
 
@@ -68,6 +79,65 @@ impl Parser {
         if let Some(Token::Define) = self.peek() {
             return self.parse_let();
         }
+        if let Some(Token::If) = self.peek() {
+            return self.parse_if();
+        }
+        self.parse_comparison()
+    }
+
+    fn parse_if(&mut self) -> Result<Expr, String> {
+        self.advance();
+        match self.advance() {
+            Some(Token::LPara) => {}
+            _ => return Err("Expected '(' after 'if' ".into()),
+        }
+        let condition = self.parse_expr()?;
+        let then_branch = self.parse_expr()?;
+        let else_branch = self.parse_expr()?;
+        match self.advance() {
+            Some(Token::RPara) => {}
+            _ => return Err("Expected ')' to close 'if' ".into()),
+        }
+        Ok(Expr::If {
+            condition: Box::new(condition),
+            then_branch: Box::new(then_branch),
+            else_branch: Box::new(else_branch),
+        })
+    }
+
+    fn parse_comparison(&mut self) -> Result<Expr, String> {
+        let mut expr = self.parse_additive()?;
+        while let Some(tok) = self.peek() {
+            match tok {
+                Token::Equal
+                | Token::NotEqual
+                | Token::Greater
+                | Token::GreaterEq
+                | Token::Less
+                | Token::LessEq => {
+                    let op = match self.advance().unwrap() {
+                        Token::Equal => BinaryOp::Equal,
+                        Token::NotEqual => BinaryOp::NotEqual,
+                        Token::Less => BinaryOp::Less,
+                        Token::Greater => BinaryOp::Greater,
+                        Token::LessEq => BinaryOp::LessEq,
+                        Token::GreaterEq => BinaryOp::GreaterEq,
+                        _ => unreachable!(),
+                    };
+                    let right = self.parse_additive()?;
+                    expr = Expr::Binary {
+                        left: Box::new(expr),
+                        op,
+                        right: Box::new(right),
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(expr)
+    }
+
+    fn parse_additive(&mut self) -> Result<Expr, String> {
         let mut expr = self.parse_term()?;
         while let Some(tok) = self.peek() {
             match tok {

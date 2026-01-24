@@ -11,6 +11,13 @@ pub enum Token {
     RPara,
     Define, 
     Ident(String), 
+    If,
+    Equal, 
+    NotEqual, // != 
+    Less,
+    Greater,
+    LessEq, // <= 
+    GreaterEq, // >= 
 }
 
 pub struct Lexer {
@@ -86,6 +93,7 @@ impl Lexer {
                     let ident = self.read_identifier();
                     let token = match ident.as_str() {
                         "define" => Token::Define, 
+                        "if" => Token::If,
                         _ => Token::Ident(ident),
                     };
                     tokens.push(token);
@@ -113,6 +121,42 @@ impl Lexer {
                 ')' => {
                     self.advance();
                     tokens.push(Token::RPara);
+                }
+                '=' => {
+                    self.advance();
+                    if let Some('=') = self.peek(){
+                        self.advance();
+                        tokens.push(Token::Equal);  
+                    }else {
+                        return Err("Expected '=' after = ".into());
+                    }
+                }
+                '!' => {
+                    self.advance();
+                    if let Some('=') = self.peek() {
+                        self.advance();
+                        tokens.push(Token::NotEqual);
+                    }else {
+                        return Err("Expected '=' after !".into());
+                    }
+                }
+                '<' => {
+                    self.advance();
+                    if let Some('=') = self.peek() {
+                        self.advance();
+                        tokens.push(Token::LessEq);
+                    }else {
+                        tokens.push(Token::Less);
+                    }
+                }
+                '>' => { 
+                    self.advance();
+                    if let Some('>') = self.peek() {
+                        self.advance();
+                        tokens.push(Token::GreaterEq);
+                    }else {
+                        tokens.push(Token::Greater);
+                    }
                 }
                 _ => {
                     return Err(format!("Invalid character: '{}'", c));

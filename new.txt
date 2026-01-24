@@ -1,1 +1,1 @@
-define (x 5 define (y 10 x+y))
+define (x 10 if (x < 5 (x * 2) (x + 5)))

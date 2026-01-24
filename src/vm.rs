@@ -13,7 +13,15 @@ pub enum Instruction {
     SET = 6,
     HLT = 7,
     GET = 8,
-    UNK = 9,
+    EQ = 9,
+    NEQ = 10, // Not Equal
+    LSS = 11, // Less Than
+    GTR = 12, // Greater Than
+    LEQ = 13, // Less or Equal
+    GEQ = 14, // Greater or Equal
+    JMZ = 15,
+    JMP = 16,
+    UNK = 17,
 }
 
 const STACK_SIZE: usize = 256;
@@ -169,6 +177,17 @@ impl VM {
         }
     }
 
+    fn compare(&mut self, op: fn(i32, i32) -> bool) -> bool {
+        if let (Some(b), Some(a)) = (self.pop(), self.pop()) {
+            let result = if op(a, b) { 1 } else { 0 };
+            self.push(result);
+            true
+        } else {
+            self.error = true;
+            false
+        }
+    }
+
     fn eval(&mut self, instr: i32, program: &[i32]) {
         match instr {
             x if x == Instruction::HLT as i32 => {
@@ -209,17 +228,82 @@ impl VM {
             x if x == Instruction::SET as i32 => {
                 *self.ip_mut() += 1;
                 let reg_id = program[self.ip() as usize] as usize;
+                if reg_id >= NUM_OF_REGISTERS - 2 {
+                    eprintln!("Error: Invalid register id");
+                    self.error = true;
+                    self.running = false;
+                    return;
+                }
                 if let Some(val) = self.pop() {
                     self.registers[reg_id] = val;
+                }else {
+                    self.running = false;
                 }
             }
             x if x == Instruction::GET as i32 => {
                 *self.ip_mut() += 1;
                 let reg_id = program[self.ip() as usize] as usize;
 
+                if reg_id >= NUM_OF_REGISTERS - 2 {
+                    eprintln!("Error: Invalid register id");
+                    self.error = true;
+                    self.running = false;
+                    return;
+                }
+
                 let value = self.registers[reg_id];
-                self.push(value);
+                if !self.push(value){
+                    self.running = false;
+                }
             }
+            x if x == Instruction::EQ as i32 => {
+                if !self.compare(|a, b| a == b) {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::NEQ as i32 => {
+                if !self.compare(|a, b| a != b) {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::LSS as i32 => {
+                if !self.compare(|a, b| a < b) {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::GTR as i32 => {
+                if !self.compare(|a, b| a > b) {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::LEQ as i32 => {
+                if !self.compare(|a, b| a <= b) {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::GEQ as i32 => {
+                if !self.compare(|a, b| a >= b) {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::JMZ as i32 => {
+                *self.ip_mut() += 1;
+                let target = program[self.ip() as usize];
+                if let Some(cond) = self.pop() {
+                    if cond == 0 {
+                        *self.ip_mut() = target -1;
+                    }
+                }else {
+                    self.running = false;
+                }
+            }
+
+            x if x ==Instruction::JMP as i32 => {
+                *self.ip_mut() += 1; 
+                let target = program[self.ip() as usize];
+                *self.ip_mut() = target -1; 
+            }
+
             _ => {
                 println!("Unknown instruction: {}", instr);
                 self.error = true;

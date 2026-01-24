@@ -55,6 +55,12 @@ impl Compiler {
                     BinaryOp::Sub => Instruction::SUB,
                     BinaryOp::Mul => Instruction::MUL,
                     BinaryOp::Div => Instruction::DIV,
+                    BinaryOp::Equal => Instruction::EQ,
+                    BinaryOp::NotEqual => Instruction::NEQ,
+                    BinaryOp::Less => Instruction::LSS,
+                    BinaryOp::Greater => Instruction::GTR,
+                    BinaryOp::LessEq => Instruction::LEQ,
+                    BinaryOp::GreaterEq => Instruction::GEQ,
                 };
 
                 out.push(instr as i32);
@@ -67,6 +73,35 @@ impl Compiler {
                     out.push(Instruction::SUB as i32);
                 }
             },
+            Expr::If { condition, then_branch, else_branch } => {
+                self.compile_expression(condition, out);
+                let jz_pos = out.len(); 
+                out.push(Instruction::JMZ as i32);
+                out.push(0);
+                // magic function -> writes byte code of 'if' expression 
+                //  and a placeholder JumpIfZero (Jump if return false) with target as 0 
+                // then writes then expression with a JMP to end of 'if' block
+                // len of out till now () -> set this as the JumpIfZero target so 
+                // if false condition -> run from this place ; 
+                // then write bytecode for else block 
+                // again len () of out and patch this as the JMP to end addr
+                // writing this so that I do not forget in future and also 
+                // because this logic tickles my brain
+                
+                self.compile_expression(then_branch, out);
+
+                let jmp_pos = out.len();
+                out.push(Instruction::JMP as i32);
+                out.push(0);
+
+                let else_addr = out.len();
+                out[jz_pos +1] = else_addr as i32;
+
+                self.compile_expression(else_branch, out);
+                let end_addr = out.len();
+                out[jmp_pos +1] = end_addr as i32;
+                
+            }
         }
     }
 }
