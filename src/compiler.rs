@@ -47,8 +47,8 @@ impl Compiler {
                 self.var_map.remove(name);
             }
             Expr::Binary { left, op, right } => {
-                compile_expression(left, out);
-                compile_expression(right, out);
+                self.compile_expression(left, out);
+                self.compile_expression(right, out);
 
                 let instr = match op {
                     BinaryOp::Add => Instruction::ADD,
@@ -63,7 +63,7 @@ impl Compiler {
                 UnaryOp::Neg => {
                     out.push(Instruction::PSH as i32);
                     out.push(0);
-                    compile_expression(expr, out);
+                    self.compile_expression(expr, out);
                     out.push(Instruction::SUB as i32);
                 }
             },
