@@ -11,6 +11,9 @@ pub enum BinaryOp {
     Sub,
     Mul,
     Div,
+    Mod,
+    Expn,
+    FloorDiv,
     Equal,
     NotEqual,
     Less,
@@ -217,22 +220,43 @@ impl Parser {
     }
 
     fn parse_term(&mut self) -> Result<Expr, String> {
-        let mut expr = self.parse_unary()?;
+        let mut expr = self.parse_exponent()?;
         while let Some(tok) = self.peek() {
             match tok {
-                Token::Slash | Token::Star => {
+                Token::Slash | Token::Star | Token::Percent | Token::SlashSlash => {
                     let op = match self.advance().unwrap() {
                         Token::Star => BinaryOp::Mul,
                         Token::Slash => BinaryOp::Div,
+                        Token::Percent => BinaryOp::Mod,
+                        Token::SlashSlash => BinaryOp::FloorDiv,
                         _ => unreachable!(),
                     };
 
-                    let right = self.parse_unary()?;
+                    let right = self.parse_exponent()?;
                     expr = Expr::Binary {
                         left: Box::new(expr),
                         op,
                         right: Box::new(right),
                     };
+                }
+                _ => break,
+            }
+        }
+        Ok(expr)
+    }
+
+    fn parse_exponent(&mut self) -> Result<Expr, String> {
+        let mut expr = self.parse_unary()?;
+        while let Some(tok) = self.peek() {
+            match tok {
+                Token::StarStar => {
+                    self.advance();
+                    let right = self.parse_unary()?;
+                    expr = Expr::Binary {
+                        left: Box::new(expr),
+                        op: BinaryOp::Expn,
+                        right: Box::new(right),
+                    }
                 }
                 _ => break,
             }

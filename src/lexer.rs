@@ -18,7 +18,10 @@ pub enum Token {
     Greater,
     LessEq, // <= 
     GreaterEq, // >= 
-    While, 
+    While,
+    Percent,
+    SlashSlash,
+    StarStar,
 }
 
 pub struct Lexer {
@@ -110,11 +113,25 @@ impl Lexer {
                 }
                 '*' => {
                     self.advance();
-                    tokens.push(Token::Star);
+                    if let Some('*') = self.peek() {
+                        self.advance();
+                        tokens.push(Token::StarStar);
+                    }else {
+                        tokens.push(Token::Star);
+                    }
                 }
                 '/' => {
                     self.advance();
-                    tokens.push(Token::Slash);
+                    if let Some('/') = self.peek() {
+                        self.advance();
+                        tokens.push(Token::SlashSlash);
+                    }else {
+                        tokens.push(Token::Slash);
+                    }
+                }
+                '%' => {
+                    self.advance();
+                    tokens.push(Token::Percent);
                 }
                 '(' => {
                     self.advance();
@@ -153,7 +170,7 @@ impl Lexer {
                 }
                 '>' => { 
                     self.advance();
-                    if let Some('>') = self.peek() {
+                    if let Some('=') = self.peek() {
                         self.advance();
                         tokens.push(Token::GreaterEq);
                     }else {

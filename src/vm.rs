@@ -21,7 +21,10 @@ pub enum Instruction {
     GEQ = 14, // Greater or Equal
     JMZ = 15,
     JMP = 16,
-    UNK = 17,
+    MOD = 17,
+    EXP = 18,
+    FLRDIV = 19,
+    UNK = 20,
 }
 
 const STACK_SIZE: usize = 256;
@@ -187,6 +190,63 @@ impl VM {
             false
         }
     }
+    
+    fn expn(&mut self) -> bool {
+        if let (Some(a), Some(b)) = (self.pop(), self.pop()) {
+            match b.checked_pow(a as u32) {
+                Some(res) => {
+                    self.push(res);
+                    true
+                }
+                None => {
+                    eprintln!("Error Integer overflow in power");
+                    self.error = true;
+                    false
+                }
+            }
+        }else {
+            self.error = true;
+            false
+        }
+    }
+
+    fn modulus(&mut self) -> bool {
+        if let (Some(a), Some(b)) = (self.pop(), self.pop()) {
+            match b.checked_rem(a) {
+                Some(res) => {
+                    self.push(res);
+                    true
+                }
+                None => {
+                    eprintln!("Error Integer overflow in Modulus");
+                    self.error = true;
+                    false
+                }
+            }
+        }else {
+            self.error = true;
+            false
+        }
+    }
+
+    fn floor_div (&mut self) -> bool {
+        if let (Some(a), Some(b)) = (self.pop(), self.pop()) {
+            match b.checked_div(a) {
+                Some(res) => {
+                    self.push(res.abs());
+                    true
+                }
+                None => {
+                    eprintln!("Error Integer overflow in Modulus");
+                    self.error = true;
+                    false
+                }
+            }
+        }else {
+            self.error = true;
+            false
+        }
+    }
 
     fn eval(&mut self, instr: i32, program: &[i32]) {
         match instr {
@@ -222,6 +282,21 @@ impl VM {
             }
             x if x == Instruction::DIV as i32 => {
                 if !self.divide() {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::MOD as i32 => {
+                if !self.modulus() {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::EXP as i32 => {
+                if !self.expn() {
+                    self.running = false;
+                }
+            }
+            x if x == Instruction::FLRDIV as i32 => {
+                if !self.floor_div() {
                     self.running = false;
                 }
             }
