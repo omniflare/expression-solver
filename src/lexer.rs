@@ -18,6 +18,7 @@ pub enum Token {
     Greater,
     LessEq, // <= 
     GreaterEq, // >= 
+    While, 
 }
 
 pub struct Lexer {
@@ -94,6 +95,7 @@ impl Lexer {
                     let token = match ident.as_str() {
                         "define" => Token::Define, 
                         "if" => Token::If,
+                        "while" => Token::While,
                         _ => Token::Ident(ident),
                     };
                     tokens.push(token);

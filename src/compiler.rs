@@ -37,14 +37,26 @@ impl Compiler {
             }
             Expr::Define { name, value, body } => {
                 self.compile_expression(value, out);
-                let reg_id = self.allocate_register();
-                self.var_map.insert(name.clone(), reg_id);
+                
+                // Check if variable already exists (reassignment in loops)
+                let (reg_id, is_new) = if let Some(&existing_reg) = self.var_map.get(name) {
+                    (existing_reg, false)  // Reuse existing register
+                } else {
+                    let new_reg = self.allocate_register();
+                    (new_reg, true)  // Allocate new register
+                };
+                
+                if is_new {
+                    self.var_map.insert(name.clone(), reg_id);
+                }
 
                 out.push(Instruction::SET as i32);
                 out.push(reg_id as i32);
 
                 self.compile_expression(body, out);
-                self.var_map.remove(name);
+                if is_new {
+                    self.var_map.remove(name);
+                }
             }
             Expr::Binary { left, op, right } => {
                 self.compile_expression(left, out);
@@ -87,7 +99,7 @@ impl Compiler {
                 // again len () of out and patch this as the JMP to end addr
                 // writing this so that I do not forget in future and also 
                 // because this logic tickles my brain
-                
+
                 self.compile_expression(then_branch, out);
 
                 let jmp_pos = out.len();
@@ -101,6 +113,26 @@ impl Compiler {
                 let end_addr = out.len();
                 out[jmp_pos +1] = end_addr as i32;
                 
+            }
+            Expr::While { condition, body } => {
+                let loop_start = out.len();
+                //if loop succeed we send the command flow to be back here; 
+                self.compile_expression(condition, out);
+
+                let jmz_pos = out.len();
+                //if condition fails we send the command flow to end of while loop ;
+                out.push(Instruction::JMZ as i32);
+                out.push(0);   
+
+                self.compile_expression(body, out);
+                // out.push(Instruction::POP as i32); //do not need the o/p in stack 
+
+                out.push(Instruction::JMP as i32);
+                out.push(loop_start as i32);
+
+                let loop_end = out.len();
+                out[jmz_pos + 1] = loop_end as i32;
+
             }
         }
     }

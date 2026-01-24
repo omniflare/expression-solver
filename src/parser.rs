@@ -42,6 +42,10 @@ pub enum Expr {
         then_branch: Box<Expr>,
         else_branch: Box<Expr>,
     },
+    While {
+        condition: Box<Expr>,
+        body: Box<Expr>,
+    },
 }
 
 pub struct Parser {
@@ -82,7 +86,31 @@ impl Parser {
         if let Some(Token::If) = self.peek() {
             return self.parse_if();
         }
+
+        if let Some(Token::While) = self.peek() {
+            return self.parse_while();
+        }
         self.parse_comparison()
+    }
+
+    fn parse_while(&mut self) -> Result<Expr, String> {
+        self.advance();
+        match self.advance() {
+            Some(Token::LPara) => {}
+            _ => return Err("Expected '(' after 'while' ".into()),
+        }
+        let condition = self.parse_expr()?;
+        let body = self.parse_expr()?;
+
+        match self.advance() {
+            Some(Token::RPara) => {}
+            _ => return Err("Expected ')' to end 'while' ".into()),
+        }
+
+        Ok(Expr::While {
+            condition: Box::new(condition),
+            body: Box::new(body),
+        })
     }
 
     fn parse_if(&mut self) -> Result<Expr, String> {
