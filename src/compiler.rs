@@ -118,6 +118,10 @@ impl Compiler {
                 
             }
             Expr::While { condition, body } => {
+                // push initial dummy value (will be replaced by body result)
+                out.push(Instruction::PSH as i32);
+                out.push(0);
+                
                 let loop_start = out.len();
                 //if loop succeed we send the command flow to be back here; 
                 self.compile_expression(condition, out);
@@ -127,8 +131,13 @@ impl Compiler {
                 out.push(Instruction::JMZ as i32);
                 out.push(0);   
 
+                // This also tickles my brain -> we push a dummy value on stack first. 
+                // remove that value before putting the vlue that is being calculated in this 
+                // iteration. so in the first iter dummy is removed, and then subsequesntly 
+                // all the middle ones are removed, only keeping the final calc at the stack; 
+                out.push(Instruction::POP as i32);
+
                 self.compile_expression(body, out);
-                // out.push(Instruction::POP as i32); //do not need the o/p in stack 
 
                 out.push(Instruction::JMP as i32);
                 out.push(loop_start as i32);

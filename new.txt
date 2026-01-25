@@ -1,5 +1,11 @@
 define (x 7
-    define (ret 2 
-        x%ret
+    define (ret 1 
+        while (x > 1
+            define (ret (ret * x)
+                define (x (x - 1)
+                    ret
+                )
+            )
+        )
     )
 )
