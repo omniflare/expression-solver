@@ -89,7 +89,7 @@ impl Lexer {
                 ' ' | '\t' | '\n' => {
                     self.skip_whitespace();
                 }
-                '0'..'9' => {
+                '0'..='9' => {
                     let num = self.read_number();
                     tokens.push(Token::Number(num));
                 }

@@ -1,4 +1,4 @@
-define (n 9
+define (n 7
     define (a 1
         define (b 1
             define (count 2

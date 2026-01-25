@@ -3,4 +3,8 @@ name = "expression-solver"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "expression_solver"
+path = "src/lib.rs"
+
 [dependencies]
