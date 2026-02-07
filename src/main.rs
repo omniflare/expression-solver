@@ -1,3 +1,4 @@
+use std::env;
 use std::fs::OpenOptions;
 
 use crate::{compiler::compile, lexer::Lexer, parser::Parser, vm::run_program};
@@ -10,7 +11,9 @@ mod utils;
 mod vm;
 
 fn main() {
-    let blob = input::import_from_path("new.txt").unwrap();
+    let path = env::args().nth(1).expect("Provide file path");
+
+    let blob = input::import_from_path(&path).unwrap();
 
     let mut lexer = Lexer::new(&blob);
 
